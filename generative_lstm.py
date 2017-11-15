@@ -1,11 +1,7 @@
-<<<<<<< HEAD
 '''Example script to generate text from diferent writings.
 If you try this script on new data, make sure your corpus
 has at least ~100k characters. ~1M is better.
 '''
-=======
-'''Script to generate text '''
->>>>>>> a401115a147dc3b7c9ed8eb4936662c29cebdcf4
 
 from __future__ import print_function
 from keras.models import Sequential
