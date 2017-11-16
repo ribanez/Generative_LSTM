@@ -14,6 +14,7 @@ import random
 import sys
 import matplotlib.pyplot as plt
 import os
+import h5py
 
 def clear_file(path_in, path_out):
     ## Delete empty lines in original file
@@ -64,11 +65,15 @@ for i, sentence in enumerate(sentences):
         x[i, t, char_indices[char]] = 1
     y[i, char_indices[next_chars[i]]] = 1
 
+# Parametres train and models
+batch_size = 255
+n_epochs = 50
+
 
 # Build the model: a single LSTM
 print('Build model...')
 model = Sequential()
-model.add(LSTM(128, input_shape=(maxlen, len(chars))))
+model.add(LSTM(batch_size, input_shape=(maxlen, len(chars))))
 model.add(Dense(len(chars)))
 model.add(Activation('softmax'))
 
@@ -86,9 +91,6 @@ def sample(preds, temperature=1.0):
     return np.argmax(probas)
 
 # train the model
-batch_size = 128
-n_epochs = 1000
-
 print()
 print('-' * 50)
 historial = model.fit(x, y,
@@ -96,7 +98,7 @@ historial = model.fit(x, y,
           epochs=n_epochs)
 
 plt.plot(historial.history["loss"])
-plt.show()
+plt.savefig('./Figures/' + writter + '_loss.png')
 
 start_index = random.randint(0, len(text) - maxlen - 1)
 
@@ -111,7 +113,7 @@ for diversity in [0.2, 0.5, 1.0, 1.2]:
     print('----- Generating with seed: "' + sentence + '"')
     sys.stdout.write(generated)
 
-    for i in range(255):
+    for i in range(batch_size):
         x_pred = np.zeros((1, maxlen, len(chars)))
         for t, char in enumerate(sentence):
             x_pred[0, t, char_indices[char]] = 1.
