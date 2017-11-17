@@ -1,12 +1,12 @@
-'''Example script to generate text from diferent writings.
-If you try this script on new data, make sure your corpus
-has at least ~100k characters. ~1M is better.
-'''
+'''Example script to generate text from different writters.'''
 
 from __future__ import print_function
 from keras.models import Sequential
 from keras.layers import Dense, Activation
+from keras.layers import Dropout
 from keras.layers import LSTM
+from keras.callbacks import ModelCheckpoint
+from keras.utils import np_utils
 from keras.optimizers import RMSprop
 from keras.utils.data_utils import get_file
 import numpy as np
@@ -14,7 +14,6 @@ import random
 import sys
 import matplotlib.pyplot as plt
 import os
-import h5py
 
 def clear_file(path_in, path_out):
     ## Delete empty lines in original file
@@ -65,21 +64,22 @@ for i, sentence in enumerate(sentences):
         x[i, t, char_indices[char]] = 1
     y[i, char_indices[next_chars[i]]] = 1
 
-# Parametres train and models
-batch_size = 255
-n_epochs = 50
-
 
 # Build the model: a single LSTM
+n_block = 256
+drop_out = 0.2
 print('Build model...')
 model = Sequential()
-model.add(LSTM(batch_size, input_shape=(maxlen, len(chars))))
+model.add(LSTM(n_block, input_shape=(maxlen, len(chars)), return_sequences=True))
+model.add(Dropout(drop_out))
+model.add(LSTM(n_block))
+model.add(Dropout(drop_out))
 model.add(Dense(len(chars)))
 model.add(Activation('softmax'))
 
 optimizer = RMSprop(lr=0.01)
-model.compile(loss='categorical_crossentropy', optimizer=optimizer)
-
+#model.compile(loss='categorical_crossentropy', optimizer=optimizer)
+model.compile(loss='categorical_crossentropy', optimizer='adam')
 
 def sample(preds, temperature=1.0):
     # helper function to sample an index from a probability array
@@ -91,14 +91,22 @@ def sample(preds, temperature=1.0):
     return np.argmax(probas)
 
 # train the model
+batch_size = 64
+n_epochs = 50
+
 print()
 print('-' * 50)
+filepath="weights-"+writter+"-{epoch:02d}-{loss:.4f}.hdf5"
+checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
+callbacks_list = [checkpoint]
+
 historial = model.fit(x, y,
           batch_size=batch_size,
-          epochs=n_epochs)
+          epochs=n_epochs,
+          callbacks=callbacks_list)
 
 plt.plot(historial.history["loss"])
-plt.savefig('./Figures/' + writter + '_loss.png')
+plt.show()
 
 start_index = random.randint(0, len(text) - maxlen - 1)
 
@@ -129,6 +137,5 @@ for diversity in [0.2, 0.5, 1.0, 1.2]:
         sys.stdout.flush()
 
 print("-"*50)
-print("---- Save Weights Model ----")
-model.save_weights('./Models/' + writter + '_weights.h5')
+
 
