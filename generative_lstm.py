@@ -72,12 +72,14 @@ print('Build model...')
 model = Sequential()
 model.add(LSTM(n_block, input_shape=(maxlen, len(chars)), return_sequences=True))
 model.add(Dropout(drop_out))
+model.add(LSTM(n_block, return_sequences=True))
+model.add(Dropout(drop_out))
 model.add(LSTM(n_block))
 model.add(Dropout(drop_out))
 model.add(Dense(len(chars)))
 model.add(Activation('softmax'))
 
-optimizer = RMSprop(lr=0.01)
+#optimizer = RMSprop(lr=0.01)
 #model.compile(loss='categorical_crossentropy', optimizer=optimizer)
 model.compile(loss='categorical_crossentropy', optimizer='adam')
 
@@ -96,7 +98,7 @@ n_epochs = 50
 
 print()
 print('-' * 50)
-filepath="weights-"+writter+"-{epoch:02d}-{loss:.4f}.hdf5"
+filepath="./Models/weights_3layers-"+writter+"-{epoch:02d}-{loss:.4f}.hdf5"
 checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
 callbacks_list = [checkpoint]
 
@@ -106,7 +108,7 @@ historial = model.fit(x, y,
           callbacks=callbacks_list)
 
 plt.plot(historial.history["loss"])
-plt.show()
+plt.savefig("./Figures/"+writter+"_loss.png")
 
 start_index = random.randint(0, len(text) - maxlen - 1)
 
